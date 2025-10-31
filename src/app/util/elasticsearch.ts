@@ -1,5 +1,5 @@
 import { Client } from "@elastic/elasticsearch";
-import { UIMessage } from "ai";
+import { Flight } from "../model/flight.model";
 
 export const flightIndex: string = "upcoming-flight-data";
 export const client: Client = new Client({
@@ -9,74 +9,86 @@ export const client: Client = new Client({
   },
 });
 
-const messageIndex: string = "chat-messages";
-export async function persistMessage(message: UIMessage, id: string) {
-  try {
-    if (!(await client.indices.exists({ index: messageIndex }))) {
-      await client.indices.create({
-        index: messageIndex,
-        mappings: {
-          properties: {
-            "chat-id": { type: "keyword" },
-            message: {
-              type: "object",
-              properties: {
-                id: { type: "keyword" },
-                role: { type: "keyword" },
-                text: { type: "semantic_text" }
+/**
+ * Utility to extract flight data from Elasticsearch response
+ * @param response 
+ * @returns 
+ */
+export function extractFlights(response: { hits?: { hits?: { _source: Flight }[] } }): Flight[] {
+    if (response.hits && Array.isArray(response.hits.hits)) {
+        return response.hits.hits.map((hit: { _source: Flight; }) => hit._source);
+    }
+    return [];
+}
+
+/**
+ * Get outbound and return flight information for a given destination from Elasticsearch
+ * @param destination 
+ * @param origin, defaults to London
+ * @returns 
+ */
+export async function getFlights(destination: string, origin: string = "London"): Promise<{ outbound: Flight[]; inbound: Flight[], message: string }> {
+    try {
+      const responses = await client.msearch({
+        searches: [
+          { index: flightIndex },
+          {
+            query: {
+              bool: {
+                must: [
+                  {
+                    match: {
+                      origin: origin,
+                    },
+                  },
+                  {
+                    match: {
+                      destination: destination,
+                    },
+                  },
+                ],
               },
             },
-            "@timestamp": { type: "date" },
           },
-        },
+
+          // Return leg
+          { index: flightIndex },
+          {
+            query: {
+              bool: {
+                must: [
+                  {
+                    match: {
+                      origin: destination,
+                    },
+                  },
+                  {
+                    match: {
+                      destination: origin,
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
       });
-      await new Promise((r) => setTimeout(r, 2000));
+
+      if (responses.responses.length < 2) {
+        throw new Error("Unable to obtain flight data");
+      }
+
+      return {
+        outbound: extractFlights(responses.responses[0] as { hits?: { hits?: { _source: Flight }[] } }),
+        inbound: extractFlights(responses.responses[1] as { hits?: { hits?: { _source: Flight }[] } }),
+        message: "Success"
+      };
+    } catch (e) {
+      console.error(e);
+      return {
+        outbound: [],
+        inbound: [],
+        message: "Unable to obtain flight information"
+      };
     }
-
-    const messageText = message.parts.map(part => "text" in part && typeof part.text === "string" ? part.text : "").join(" ")
-
-    await client.index({
-      index: messageIndex,
-      document: {
-        "chat-id": id,
-        message: {
-            id: message.id,
-            role: message.role,
-            text: messageText
-        },
-        "@timestamp": new Date().toISOString(),
-      },
-    });
-  } catch (e) {
-    console.error("Unable to persist message", e);
   }
-}
-
-export async function getSimilarMessages(
-  message: UIMessage
-): Promise<UIMessage[]> {
-  try {
-    const result = await client.search<{ message: UIMessage }>({
-      index: messageIndex,
-      query: {
-        semantic: {
-          field: "message.parts.text",
-          query: message.parts
-            .map((part) =>
-              "text" in part && typeof part.text === "string" ? part.text : " "
-            )
-            .join(" "),
-        },
-      },
-      sort: [{ "@timestamp": "asc" }],
-      size: 20,
-    });
-
-    return result.hits.hits
-      .map((hit) => hit._source?.message)
-      .filter((msg): msg is UIMessage => msg !== undefined);
-  } catch (e) {
-    console.error("Unable to retrieve messages", e);
-    return [];
-  }
-}

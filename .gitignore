@@ -40,5 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Elastic start-local
-src/app/elastic-start-local/*
+# Elasticsearch instance (via start-local)
+elasticsearch/*

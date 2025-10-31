@@ -83,5 +83,5 @@ async function addFlightsToIndex() {
   }
 }
 
-createIndex();
+await createIndex();
 addFlightsToIndex();
