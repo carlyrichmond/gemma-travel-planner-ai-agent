@@ -31,20 +31,16 @@ export async function POST(req: Request) {
   try {
     const convertedMessages = convertToModelMessages(allMessages);
     const result = streamText({
-      model: ollama("gemma3:12b"),
+      model: ollama("gemma3:1b"),
       system:
-        /*"You are a helpful assistant that returns travel itineraries based on location, the FCDO guidance from the specified tool, and the weather captured from the displayWeather tool." +
+        "You are a helpful assistant that returns travel itineraries based on location, the FCDO guidance from the specified tool, and the weather captured from the displayWeather tool." +
         "Use the flight information from tool getFlights only to recommend possible flights in the itinerary." +
         "If there are no flights available generate a sample itinerary and advise them to contact a travel agent." +
         "Return an itinerary of sites to see and things to do based on the weather." +
-        "If the FCDO tool warns against travel DO NOT generate an itinerary.",*/
-        "You are a helpful assistant that returns travel itineraries based on location, the FCDO guidance from the UK government," + 
-        "and the weather around that the specified time of year (if provided)." +
-        "Return an itinerary of sites to see and things to do based on the weather." +
-        "If the FCDO warns against travel DO NOT generate an itinerary.",
+        "If the FCDO tool warns against travel DO NOT generate an itinerary.",
       messages: convertedMessages,
       stopWhen: stepCountIs(2),
-      //tools,
+      tools,
     });
 
     // Return data stream to allow the useChat hook to handle the results as they are streamed through for a better user experience
