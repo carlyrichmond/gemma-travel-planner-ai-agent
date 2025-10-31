@@ -24,27 +24,25 @@ export async function POST(req: Request) {
   const lastMessageIndex = messages.length > 0 ? messages.length - 1 : 0;
   await persistMessage(messages[lastMessageIndex], id);
 
-  // Get chat history by chat id 
+  // Get chat history by chat id
   const previousMessages = await getSimilarMessages(messages[lastMessageIndex]);
   const allMessages = [...previousMessages, ...messages];
 
   try {
     const convertedMessages = convertToModelMessages(allMessages);
     const result = streamText({
-      model: ollama("gemma3:12b"),
+      model: ollama("PetrosStav/gemma3-tools:4b"),
       system:
-        /*"You are a helpful assistant that returns travel itineraries based on location, the FCDO guidance from the specified tool, and the weather captured from the displayWeather tool." +
+        "You are a helpful assistant that returns travel itineraries based on location, the FCDO guidance from the specified tool, and the weather captured from the displayWeather tool." +
         "Use the flight information from tool getFlights only to recommend possible flights in the itinerary." +
         "If there are no flights available generate a sample itinerary and advise them to contact a travel agent." +
-        "Return an itinerary of sites to see and things to do based on the weather." +
-        "If the FCDO tool warns against travel DO NOT generate an itinerary.",*/
-        "You are a helpful assistant that returns travel itineraries based on location, the FCDO guidance from the UK government," + 
-        "and the weather around that the specified time of year (if provided)." +
-        "Return an itinerary of sites to see and things to do based on the weather." +
-        "If the FCDO warns against travel DO NOT generate an itinerary.",
+        "You must obtain both the weather and FCDO guidance before generating the itinerary." +
+        "Always return an itinerary of sites to see and things to do based on both the weather and FCDO guidance." + 
+        "Generate an itinerary without asking for more information from the user." +
+        "If the FCDO tool warns against travel, advise the user you cannot generate an itinerary.",
       messages: convertedMessages,
       stopWhen: stepCountIs(2),
-      //tools,
+      tools,
     });
 
     // Return data stream to allow the useChat hook to handle the results as they are streamed through for a better user experience
