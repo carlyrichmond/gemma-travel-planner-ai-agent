@@ -41,4 +41,4 @@ yarn-error.log*
 next-env.d.ts
 
 # Elastic start-local
-src/app/elastic-start-local/*
+elasticsearch/*
