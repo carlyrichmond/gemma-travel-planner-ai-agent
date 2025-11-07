@@ -61,65 +61,7 @@ export default function Chat() {
                             __html: markdownConverter.makeHtml(part.text),
                           }}></div>
                       );
-                    } else {
-                      if (part.type === "tool-weather") {
-                        switch (part.state) {
-                          case "input-available":
-                            return (
-                              <div className="weather__tool" key={index}>
-                                <Image
-                                  src={pending}
-                                  width={80}
-                                  height={80}
-                                  alt="Placeholder Weather"
-                                />
-                                <p className="loading__weather__message">
-                                  Loading weather...
-                                </p>
-                              </div>
-                            );
-                          case "output-available":
-                            return (
-                              <div className="weather__tool" key={index}>
-                                <Weather {...(part.output as WeatherProps)} />
-                              </div>
-                            );
-                          case "output-error":
-                            return <div className="weather__tool" key={index}>No weather available!</div>;
-                          default:
-                            return null;
-                        }
-                      } else if (part.type === "tool-fcdo") {
-                        switch (part.state) {
-                          case "input-available":
-                            return (
-                              <div className="fcdo__tool" key={index}>
-                                  <Image
-                                    src={pin}
-                                    width={80}
-                                    height={80}
-                                    alt="Placeholder FCDO Advice"
-                                  />
-                                  <p className="loading__fcdo__message">
-                                    Loading FCDO advice...
-                                  </p>
-                                </div>
-                            );
-                          case "output-available":
-                            return (
-                              <div className="fcdo__tool" key={index}>
-                                  <FCDOGuidance
-                                    {...(part.output as FCDOGuidanceProps)}
-                                  />
-                                </div>
-                            );
-                          case "output-error":
-                            return <div key={index}>No FCDO guidance!</div>;
-                          default:
-                            return null;
-                        }
-                      }
-                    }
+                    } 
                   })}
                 </div>
               </div>
