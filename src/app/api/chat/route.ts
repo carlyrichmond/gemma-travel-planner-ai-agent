@@ -18,25 +18,17 @@ const tools = {
 
 // Post request handler
 export async function POST(req: Request) {
-  const { messages, id } = await req.json();
-
-  // Store current message
-  const lastMessageIndex = messages.length > 0 ? messages.length - 1 : 0;
-  await persistMessage(messages[lastMessageIndex], id);
-
-  // Get chat history by chat id
-  const previousMessages = await getSimilarMessages(messages[lastMessageIndex]);
-  const allMessages = [...previousMessages, ...messages];
+  const { messages } = await req.json();
 
   try {
-    const convertedMessages = convertToModelMessages(allMessages);
+    const convertedMessages = convertToModelMessages(messages);
     const result = streamText({
       model: ollama("PetrosStav/gemma3-tools:4b"),
       system:
         "You are a helpful assistant that returns travel itineraries based on location, the FCDO guidance from the specified tool, and the weather captured from the displayWeather tool." +
+        "You must obtain both the weather and FCDO guidance from the respective tools before generating the itinerary." +
         "Use the flight information from tool getFlights only to recommend possible flights in the itinerary." +
         "If there are no flights available generate a sample itinerary and advise them to contact a travel agent." +
-        "You must obtain both the weather and FCDO guidance before generating the itinerary." +
         "Always return an itinerary of sites to see and things to do based on both the weather and FCDO guidance." + 
         "Generate an itinerary without asking for more information from the user." +
         "If the FCDO tool warns against travel, advise the user you cannot generate an itinerary.",
