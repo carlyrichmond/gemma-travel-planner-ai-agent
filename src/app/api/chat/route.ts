@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 import { weatherTool } from "@/app/ai/weather.tool";
 import { fcdoTool } from "@/app/ai/fcdo.tool";
 import { flightTool } from "@/app/ai/flights.tool";
-import { getSimilarMessages, persistMessage } from "@/app/util/elasticsearch";
 
 // Allow streaming responses up to 30 seconds to address typically longer responses from LLMs
 export const maxDuration = 30;
