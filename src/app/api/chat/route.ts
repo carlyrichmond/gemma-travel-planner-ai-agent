@@ -1,4 +1,4 @@
-import { ollama } from "ollama-ai-provider-v2";
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, stepCountIs, convertToModelMessages } from "ai";
 import { NextResponse } from "next/server";
 
@@ -15,6 +15,11 @@ const tools = {
   fcdo: fcdoTool,
 };
 
+const google = createGoogleGenerativeAI({
+  // custom settings
+  apiKey: process.env.GOOGLE_AI_KEY
+});
+
 // Post request handler
 export async function POST(req: Request) {
   const { messages } = await req.json();
@@ -22,7 +27,7 @@ export async function POST(req: Request) {
   try {
     const convertedMessages = convertToModelMessages(messages);
     const result = streamText({
-      model: ollama("PetrosStav/gemma3-tools:4b"),
+      model: google("gemini-2.5-flash-lite"),
       system:
         "You are a helpful assistant that returns travel itineraries based on location, the FCDO guidance from the specified tool, and the weather captured from the displayWeather tool." +
         "You must obtain both the weather and FCDO guidance from the respective tools before generating the itinerary." +
